@@ -4,5 +4,10 @@
 */
 package zu.ch.nasafestup.data
 
-class EventsApi {
+import Event
+import retrofit2.http.GET
+
+interface EventsApi {
+    @GET("events")
+    suspend fun getEvents(): List<Event>
 }

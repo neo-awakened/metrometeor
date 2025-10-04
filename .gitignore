@@ -1,0 +1,32 @@
+# Gradle files
+.gradle/
+build/
+*/build/
+
+# Local configuration file (sdk path, etc.)
+local.properties
+
+# Log files
+*.log
+
+# Android Studio
+.idea/
+*.iml
+
+# Keystore files (sensitive)
+*.jks
+*.keystore
+
+# macOS
+.DS_Store
+
+# NDK
+.externalNativeBuild/
+.cxx/
+
+# Captures (screenshots, test recordings)
+captures/
+
+# Google Services (avoid if you use Firebase configs that shouldn’t be public)
+google-se
+
