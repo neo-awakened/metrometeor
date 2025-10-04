@@ -4,6 +4,10 @@
 */
 package zu.ch.nasafestup.data
 
+import Event
+import HeatPoint
+import POI
+import com.google.android.gms.maps.model.LatLng
 import java.time.LocalDateTime
 
 data class EventDto(
@@ -41,4 +45,45 @@ data class PoiDto(
 enum class PoiColorDto {
     RED,
     GREEN
+}
+
+
+fun EventItemDto.toEvent(): Event {
+    val areaLatLng = if (this.latitude != null && this.longitude != null) {
+        listOf(LatLng(this.latitude, this.longitude))
+    } else emptyList()
+
+    return Event(
+        id = this.id,
+        title = this.title,
+        description = this.description,
+        area = areaLatLng,
+        holes = emptyList(), // You can populate if DTO contains holes info
+        imageUrl = 0, // Since Event expects drawable, you may need to map it manually
+        date = this.date.toLocalDate(), // Convert LocalDateTime -> LocalDate
+        heatmapPoints = this.heatmapPoints.map { it.toHeatPoint() },
+        pois = this.pois.map { it.toPOI() }
+    )
+}
+
+fun HeatPointDto.toHeatPoint(): HeatPoint {
+    return HeatPoint(
+        latLng = LatLng(this.lat, this.lng),
+        intensity = this.intensity
+    )
+}
+
+fun PoiDto.toPOI(): POI {
+    return POI(
+        latLng = LatLng(this.lat, this.lng),
+        color = when (this.color) {
+            PoiColorDto.RED -> POIColor.RED
+            PoiColorDto.GREEN -> POIColor.GREEN
+        }
+    )
+}
+
+// Convert EventDto (list) to List<Event>
+fun EventDto.toEvents(): List<Event> {
+    return this.events.map { it.toEvent() }
 }

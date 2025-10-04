@@ -38,17 +38,13 @@ val fakeEvents = listOf(
         title = "Street Parade",
         description = "The world's largest techno parade, attracting up to one million visitors annually along the shore of Lake Zurich.",
         area = listOf(
-            LatLng(47.361535, 8.547699),
-            LatLng(47.363781, 8.549832),
-            LatLng(47.365926, 8.548081),
-            LatLng(47.366853, 8.544249),
-            LatLng(47.367485, 8.544713),
-            LatLng(47.366859, 8.541054),
-            LatLng(47.366489, 8.541929),
-            LatLng(47.363978, 8.536958),
-            LatLng(47.364809, 8.535111),
-            LatLng(47.359732, 8.536712),
-            LatLng(47.359980, 8.533856)
+            LatLng(47.366292, 8.548093),
+            LatLng(47.366570, 8.547778),
+            LatLng(47.369814, 8.545597),
+            LatLng(47.369533, 8.538093),
+            LatLng(47.367008, 8.534965),
+            LatLng(47.365180, 8.535193),
+            LatLng(47.365444, 8.539257)
         ),
         holes = listOf(
             listOf(

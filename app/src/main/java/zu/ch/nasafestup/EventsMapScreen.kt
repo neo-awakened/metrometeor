@@ -39,17 +39,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.Circle
-import com.google.android.gms.maps.model.TileProvider
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polygon
-import com.google.maps.android.compose.TileOverlay
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberTileOverlayState
-import com.google.maps.android.heatmaps.HeatmapTileProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,7 +123,7 @@ fun EventMapScreen(
             FloatingActionButton(
                 onClick = { showDialog = true },
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
+                    .align(Alignment.BottomStart) // changed from BottomEnd to BottomStart
                     .padding(16.dp)
             ) {
                 Icon(
@@ -138,7 +133,6 @@ fun EventMapScreen(
                 )
             }
 
-            // Dialog
             if (showDialog) {
                 AlertDialog(
                     onDismissRequest = { showDialog = false },

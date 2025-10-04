@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import zu.ch.nasafestup.data.RetrofitInstance
+import zu.ch.nasafestup.data.toEvents
 
 class EventsViewModel : ViewModel() {
 
@@ -23,7 +24,7 @@ class EventsViewModel : ViewModel() {
 
             try {
                 val dtos = RetrofitInstance.api.getEvents()
-                _events.value = dtos
+                _events.value = dtos.toEvents()
             } catch (e: Exception) {
                 e.printStackTrace()
                 _events.value = fakeEvents
