@@ -1,0 +1,2307 @@
+openapi: 3.0.3
+info:
+  title: CrowdNavigator API
+  description: |
+    CrowdNavigator is a comprehensive navigation and crowd management platform designed for traffic navigation, 
+    crowd control at events, and festival navigation. The API provides real-time information about events, 
+    traffic conditions, facilities, and route optimization to help users navigate efficiently through 
+    crowded areas and events.
+    
+    Features:
+    - Real-time event information and location data
+    - Traffic conditions and road blockage updates
+    - Event organizer management tools
+    - Facility location services (restrooms, parking, etc.)
+    - Weather and transport information
+    - Route prediction and optimization
+    - Offline map capabilities
+    
+  version: 1.0.0
+  contact:
+    name: CrowdNavigator API Support
+    email: api-support@crowdnavigator.com
+    url: https://crowdnavigator.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.crowdnavigator.com/v1
+    description: Production server
+  - url: https://staging-api.crowdnavigator.com/v1
+    description: Staging server
+  - url: https://dev-api.crowdnavigator.com/v1
+    description: Development server
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /events:
+    get:
+      summary: Get events
+      description: Retrieve a list of events with optional filtering by category, location, or date range
+      tags:
+        - Events
+      parameters:
+        - name: category
+          in: query
+          description: Filter events by category
+          required: false
+          schema:
+            type: string
+            enum: [music, sports, festival, conference, cultural, food, outdoor, entertainment, educational, business]
+        - name: latitude
+          in: query
+          description: Latitude for location-based search
+          required: false
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+        - name: longitude
+          in: query
+          description: Longitude for location-based search
+          required: false
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+        - name: radius
+          in: query
+          description: Search radius in kilometers (used with lat/lng)
+          required: false
+          schema:
+            type: number
+            format: double
+            minimum: 0.1
+            maximum: 100
+            default: 10
+        - name: start_date
+          in: query
+          description: Filter events starting from this date (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: Filter events ending before this date (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Maximum number of events to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of events to skip for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  total:
+                    type: integer
+                    description: Total number of events matching criteria
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{eventId}:
+    get:
+      summary: Get event details
+      description: Retrieve detailed information about a specific event
+      tags:
+        - Events
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Unique identifier for the event
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{eventId}/road-blockages:
+    get:
+      summary: Get road blockages for an event
+      description: Retrieve current road blockages and traffic restrictions related to a specific event
+      tags:
+        - Events
+        - Traffic
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Unique identifier for the event
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Road blockages for the event
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id:
+                    type: string
+                  blockages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoadBlockage'
+                  last_updated:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /traffic:
+    get:
+      summary: Get traffic information for an area
+      description: Retrieve real-time traffic conditions, construction sites, and road blockages for a specified area
+      tags:
+        - Traffic
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          description: Latitude for the center of the search area
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+        - name: longitude
+          in: query
+          required: true
+          description: Longitude for the center of the search area
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+        - name: radius
+          in: query
+          description: Search radius in kilometers
+          required: false
+          schema:
+            type: number
+            format: double
+            minimum: 0.1
+            maximum: 50
+            default: 5
+        - name: include_construction
+          in: query
+          description: Include construction sites in the response
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - name: include_incidents
+          in: query
+          description: Include traffic incidents in the response
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - name: severity_filter
+          in: query
+          description: Filter by minimum severity level
+          required: false
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+      responses:
+        '200':
+          description: Traffic information for the area
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  traffic_conditions:
+                    type: object
+                    properties:
+                      overall_status:
+                        type: string
+                        enum: [free_flow, light_traffic, moderate_traffic, heavy_traffic, severe_congestion]
+                      average_speed:
+                        type: number
+                        description: Average speed in km/h
+                      congestion_level:
+                        type: number
+                        minimum: 0
+                        maximum: 100
+                        description: Congestion level percentage
+                  construction_sites:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConstructionSite'
+                  road_blockages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoadBlockage'
+                  incidents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TrafficIncident'
+                  last_updated:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /traffic/road-segments:
+    get:
+      summary: Get traffic data for specific road segments
+      description: Retrieve traffic conditions for specific road segments or routes
+      tags:
+        - Traffic
+      parameters:
+        - name: road_names
+          in: query
+          description: Comma-separated list of road names
+          required: false
+          schema:
+            type: string
+            example: "Main Street,Highway 101,Broadway"
+        - name: route_coordinates
+          in: query
+          description: JSON array of coordinate pairs defining a route
+          required: false
+          schema:
+            type: string
+            example: "[[lat1,lng1],[lat2,lng2],[lat3,lng3]]"
+      responses:
+        '200':
+          description: Traffic data for specified road segments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  road_segments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoadSegment'
+                  last_updated:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/{eventId}/organizer:
+    get:
+      summary: Get event organizer details
+      description: Retrieve detailed information about the event organizer including contact information
+      tags:
+        - Event Management
+        - Organizers
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Unique identifier for the event
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event organizer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedOrganizer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/{eventId}/participants:
+    get:
+      summary: Get event participants list
+      description: Retrieve list of registered participants for an event (organizer access required)
+      tags:
+        - Event Management
+        - Participants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Unique identifier for the event
+          schema:
+            type: string
+        - name: include_sos
+          in: query
+          description: Include SOS contact details (emergency personnel only)
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          description: Maximum number of participants to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          description: Number of participants to skip for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of event participants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Participant'
+                  total:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+                  sos_contacts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SOSContact'
+                    description: Emergency contact information (only if include_sos=true and user has permission)
+        '403':
+          description: Access denied - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/{eventId}/participants/{participantId}/location:
+    get:
+      summary: Get participant location
+      description: Get real-time location of a specific participant (requires permission)
+      tags:
+        - Event Management
+        - Location Sharing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Unique identifier for the event
+          schema:
+            type: string
+        - name: participantId
+          in: path
+          required: true
+          description: Unique identifier for the participant
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Participant location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantLocation'
+        '403':
+          description: Access denied - participant hasn't shared location or insufficient permissions
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Share participant location
+      description: Share or update participant's current location
+      tags:
+        - Event Management
+        - Location Sharing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Unique identifier for the event
+          schema:
+            type: string
+        - name: participantId
+          in: path
+          required: true
+          description: Unique identifier for the participant
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - latitude
+                - longitude
+              properties:
+                latitude:
+                  type: number
+                  format: double
+                  minimum: -90
+                  maximum: 90
+                longitude:
+                  type: number
+                  format: double
+                  minimum: -180
+                  maximum: 180
+                accuracy:
+                  type: number
+                  description: Location accuracy in meters
+                sharing_duration:
+                  type: integer
+                  description: "How long to share location in minutes (default: 60)"
+                  minimum: 5
+                  maximum: 1440
+                  default: 60
+                emergency:
+                  type: boolean
+                  description: Mark as emergency location sharing
+                  default: false
+      responses:
+        '200':
+          description: Location shared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  location_id:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/{eventId}/sos:
+    get:
+      summary: Get SOS information for event
+      description: Retrieve emergency contact information and SOS details for an event
+      tags:
+        - Event Management
+        - Emergency
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Unique identifier for the event
+          schema:
+            type: string
+      responses:
+        '200':
+          description: SOS information for the event
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  emergency_contacts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EmergencyContact'
+                  medical_stations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MedicalStation'
+                  evacuation_routes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EvacuationRoute'
+                  emergency_procedures:
+                    type: string
+                    description: Emergency procedures text
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Report emergency
+      description: Report an emergency situation at the event
+      tags:
+        - Event Management
+        - Emergency
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: Unique identifier for the event
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - emergency_type
+                - location
+                - reporter_contact
+              properties:
+                emergency_type:
+                  type: string
+                  enum: [medical, fire, security, lost_person, accident, other]
+                location:
+                  $ref: '#/components/schemas/Location'
+                description:
+                  type: string
+                  description: Description of the emergency
+                severity:
+                  type: string
+                  enum: [low, medium, high, critical]
+                  default: medium
+                reporter_contact:
+                  type: string
+                  description: Contact information of the person reporting
+                people_involved:
+                  type: integer
+                  description: Number of people involved
+                  minimum: 1
+      responses:
+        '201':
+          description: Emergency reported successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  emergency_id:
+                    type: string
+                  message:
+                    type: string
+                  estimated_response_time:
+                    type: string
+                    description: Estimated response time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /facilities/restrooms:
+    get:
+      summary: Get restroom locations
+      description: Retrieve locations of restrooms/bathrooms with geo coordinates and type information
+      tags:
+        - Facilities
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          description: Latitude for location-based search
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+        - name: longitude
+          in: query
+          required: true
+          description: Longitude for location-based search
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+        - name: radius
+          in: query
+          description: Search radius in kilometers
+          required: false
+          schema:
+            type: number
+            format: double
+            minimum: 0.1
+            maximum: 20
+            default: 2
+        - name: type
+          in: query
+          description: Filter by restroom type
+          required: false
+          schema:
+            type: string
+            enum: [mobile, permanent, portable, accessible, family]
+        - name: accessible_only
+          in: query
+          description: Show only accessible restrooms
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: event_id
+          in: query
+          description: Filter restrooms associated with a specific event
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of restroom locations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  restrooms:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Restroom'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /weather:
+    get:
+      summary: Get weather information
+      description: Retrieve current weather conditions and forecast for specified coordinates
+      tags:
+        - Weather
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          description: Latitude for weather information
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+        - name: longitude
+          in: query
+          required: true
+          description: Longitude for weather information
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+        - name: include_forecast
+          in: query
+          description: Include weather forecast for next 5 days
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: include_alerts
+          in: query
+          description: Include weather alerts and warnings
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Weather information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeatherData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /transport/timetable:
+    get:
+      summary: Get transport timetable
+      description: Retrieve public transport timetables for a specific location or route
+      tags:
+        - Transport
+      parameters:
+        - name: latitude
+          in: query
+          description: Latitude for location-based search
+          required: false
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+        - name: longitude
+          in: query
+          description: Longitude for location-based search
+          required: false
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+        - name: stop_id
+          in: query
+          description: Specific transport stop ID
+          required: false
+          schema:
+            type: string
+        - name: route_id
+          in: query
+          description: Specific route ID
+          required: false
+          schema:
+            type: string
+        - name: transport_type
+          in: query
+          description: Filter by transport type
+          required: false
+          schema:
+            type: string
+            enum: [bus, train, metro, tram, ferry, all]
+            default: all
+        - name: radius
+          in: query
+          description: Search radius in kilometers (used with lat/lng)
+          required: false
+          schema:
+            type: number
+            format: double
+            minimum: 0.1
+            maximum: 5
+            default: 1
+        - name: time_window
+          in: query
+          description: Time window in hours for schedule
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 24
+            default: 2
+      responses:
+        '200':
+          description: Transport timetable information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stops:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransportStop'
+                  routes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransportRoute'
+                  schedules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransportSchedule'
+                  last_updated:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /routes/predict:
+    post:
+      summary: Get route prediction
+      description: Get optimal route prediction between two locations with real-time traffic and crowd data
+      tags:
+        - Navigation
+        - Routes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - origin
+                - destination
+              properties:
+                origin:
+                  type: object
+                  required:
+                    - latitude
+                    - longitude
+                  properties:
+                    latitude:
+                      type: number
+                      format: double
+                      minimum: -90
+                      maximum: 90
+                    longitude:
+                      type: number
+                      format: double
+                      minimum: -180
+                      maximum: 180
+                    name:
+                      type: string
+                      description: Optional name for the origin location
+                destination:
+                  type: object
+                  required:
+                    - latitude
+                    - longitude
+                  properties:
+                    latitude:
+                      type: number
+                      format: double
+                      minimum: -90
+                      maximum: 90
+                    longitude:
+                      type: number
+                      format: double
+                      minimum: -180
+                      maximum: 180
+                    name:
+                      type: string
+                      description: Optional name for the destination location
+                travel_mode:
+                  type: string
+                  enum: [driving, walking, cycling, public_transit, mixed]
+                  default: driving
+                  description: Preferred mode of transportation
+                avoid_crowds:
+                  type: boolean
+                  default: true
+                  description: Avoid crowded areas when possible
+                avoid_events:
+                  type: boolean
+                  default: false
+                  description: Avoid areas with ongoing events
+                departure_time:
+                  type: string
+                  format: date-time
+                  description: Planned departure time (for better prediction)
+                alternatives:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  default: 3
+                  description: Number of alternative routes to provide
+                accessibility_required:
+                  type: boolean
+                  default: false
+                  description: Require accessible routes
+      responses:
+        '200':
+          description: Route predictions with alternatives
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  routes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RoutePrediction'
+                  traffic_summary:
+                    type: object
+                    properties:
+                      overall_conditions:
+                        type: string
+                        enum: [good, moderate, heavy, severe]
+                      estimated_delay:
+                        type: integer
+                        description: Estimated delay in minutes due to traffic
+                  crowd_alerts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        location:
+                          $ref: '#/components/schemas/Location'
+                        crowd_level:
+                          type: string
+                          enum: [low, medium, high, extreme]
+                        description:
+                          type: string
+                  calculated_at:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /maps/offline:
+    get:
+      summary: Get offline map data
+      description: Retrieve offline map data for a specific area with event information
+      tags:
+        - Maps
+        - Offline
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          description: Center latitude for map area
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+        - name: longitude
+          in: query
+          required: true
+          description: Center longitude for map area
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+        - name: zoom_level
+          in: query
+          description: Map zoom level
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 15
+        - name: radius
+          in: query
+          description: Map area radius in kilometers
+          required: false
+          schema:
+            type: number
+            format: double
+            minimum: 0.5
+            maximum: 50
+            default: 5
+        - name: include_events
+          in: query
+          description: Include event markers and information
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - name: include_facilities
+          in: query
+          description: Include facility markers (restrooms, parking, etc.)
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - name: include_transport
+          in: query
+          description: Include public transport information
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - name: map_style
+          in: query
+          description: Map style preference
+          required: false
+          schema:
+            type: string
+            enum: [standard, satellite, terrain, hybrid]
+            default: standard
+        - name: format
+          in: query
+          description: Response format
+          required: false
+          schema:
+            type: string
+            enum: [geojson, mvt, json]
+            default: geojson
+      responses:
+        '200':
+          description: Offline map data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfflineMapData'
+            application/vnd.mapbox-vector-tile:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /maps/offline/download:
+    post:
+      summary: Request offline map download package
+      description: Create and download a complete offline map package for specified area
+      tags:
+        - Maps
+        - Offline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - area
+              properties:
+                area:
+                  type: object
+                  required:
+                    - bounds
+                  properties:
+                    bounds:
+                      type: object
+                      required:
+                        - northeast
+                        - southwest
+                      properties:
+                        northeast:
+                          type: object
+                          required:
+                            - latitude
+                            - longitude
+                          properties:
+                            latitude:
+                              type: number
+                              format: double
+                            longitude:
+                              type: number
+                              format: double
+                        southwest:
+                          type: object
+                          required:
+                            - latitude
+                            - longitude
+                          properties:
+                            latitude:
+                              type: number
+                              format: double
+                            longitude:
+                              type: number
+                              format: double
+                    name:
+                      type: string
+                      description: Name for the offline map area
+                zoom_levels:
+                  type: array
+                  items:
+                    type: integer
+                    minimum: 1
+                    maximum: 20
+                  description: Zoom levels to include in offline package
+                  default: [10, 11, 12, 13, 14, 15, 16, 17]
+                include_data:
+                  type: object
+                  properties:
+                    events:
+                      type: boolean
+                      default: true
+                    facilities:
+                      type: boolean
+                      default: true
+                    transport:
+                      type: boolean
+                      default: true
+                    traffic:
+                      type: boolean
+                      default: false
+                    poi:
+                      type: boolean
+                      default: true
+                      description: Points of interest
+                expiry_hours:
+                  type: integer
+                  minimum: 1
+                  maximum: 168
+                  default: 24
+                  description: How long the offline package should remain valid (hours)
+      responses:
+        '202':
+          description: Offline map package creation started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                    description: Unique identifier for the download job
+                  status:
+                    type: string
+                    enum: [queued, processing, completed, failed]
+                  estimated_completion:
+                    type: string
+                    format: date-time
+                  download_url:
+                    type: string
+                    format: uri
+                    description: URL to download the package (available when status is completed)
+                  package_size_estimate:
+                    type: integer
+                    description: Estimated package size in bytes
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /maps/offline/jobs/{jobId}:
+    get:
+      summary: Check offline map download job status
+      description: Check the status of an offline map package creation job
+      tags:
+        - Maps
+        - Offline
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          description: Unique identifier for the download job
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [queued, processing, completed, failed, expired]
+                  progress:
+                    type: integer
+                    minimum: 0
+                    maximum: 100
+                    description: Completion percentage
+                  download_url:
+                    type: string
+                    format: uri
+                    description: URL to download the package (available when status is completed)
+                  package_size:
+                    type: integer
+                    description: Actual package size in bytes
+                  expires_at:
+                    type: string
+                    format: date-time
+                  error_message:
+                    type: string
+                    description: Error details if status is failed
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Event:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - category
+        - location
+        - start_time
+        - end_time
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the event
+          example: "evt_12345"
+        name:
+          type: string
+          description: Name of the event
+          example: "Summer Music Festival 2025"
+        description:
+          type: string
+          description: Detailed description of the event
+          example: "A three-day outdoor music festival featuring local and international artists"
+        title:
+          type: string
+          description: Short title or headline for the event
+          example: "Summer Music Fest"
+        teaser:
+          type: string
+          description: Brief promotional text or teaser
+          example: "Experience the best music under the stars!"
+        category:
+          type: string
+          enum: [music, sports, festival, conference, cultural, food, outdoor, entertainment, educational, business]
+          description: Category of the event
+        image:
+          type: object
+          properties:
+            url:
+              type: string
+              format: uri
+              description: URL to the event image
+            alt_text:
+              type: string
+              description: Alternative text for the image
+            thumbnail_url:
+              type: string
+              format: uri
+              description: URL to a smaller thumbnail version
+        location:
+          $ref: '#/components/schemas/Location'
+        start_time:
+          type: string
+          format: date-time
+          description: Event start time (ISO 8601)
+        end_time:
+          type: string
+          format: date-time
+          description: Event end time (ISO 8601)
+        special_opening_hours:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                description: Date for special hours
+              start_time:
+                type: string
+                format: time
+                description: Special opening time
+              end_time:
+                type: string
+                format: time
+                description: Special closing time
+              description:
+                type: string
+                description: Description of special hours
+        organizer:
+          $ref: '#/components/schemas/Organizer'
+        capacity:
+          type: integer
+          description: Maximum capacity of the event
+        current_attendance:
+          type: integer
+          description: Current number of attendees
+        status:
+          type: string
+          enum: [scheduled, ongoing, completed, cancelled, postponed]
+        tags:
+          type: array
+          items:
+            type: string
+          description: Event tags for better categorization
+
+    Location:
+      type: object
+      required:
+        - latitude
+        - longitude
+        - address
+      properties:
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: Latitude coordinate
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: Longitude coordinate
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+              description: Street address
+            city:
+              type: string
+              description: City name
+            state:
+              type: string
+              description: State or province
+            postal_code:
+              type: string
+              description: Postal or ZIP code
+            country:
+              type: string
+              description: Country name
+            formatted:
+              type: string
+              description: Full formatted address
+        venue_name:
+          type: string
+          description: Name of the venue
+        landmarks:
+          type: array
+          items:
+            type: string
+          description: Nearby landmarks for easier navigation
+
+    Organizer:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the organizer
+        name:
+          type: string
+          description: Name of the organizing entity
+        contact:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+            phone:
+              type: string
+            website:
+              type: string
+              format: uri
+            emergency_contact:
+              type: string
+              description: Emergency contact number
+        description:
+          type: string
+          description: Description of the organizer
+
+    RoadBlockage:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the blockage
+        type:
+          type: string
+          enum: [construction, event_closure, accident, maintenance, weather, emergency]
+          description: Type of road blockage
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Severity level of the blockage
+        location:
+          $ref: '#/components/schemas/Location'
+        affected_roads:
+          type: array
+          items:
+            type: string
+          description: List of affected road names
+        description:
+          type: string
+          description: Description of the blockage
+        start_time:
+          type: string
+          format: date-time
+          description: When the blockage started
+        estimated_end_time:
+          type: string
+          format: date-time
+          description: Estimated time when blockage will be cleared
+        detour_available:
+          type: boolean
+          description: Whether alternative routes are available
+        detour_description:
+          type: string
+          description: Description of alternative routes
+
+    ConstructionSite:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the construction site
+        location:
+          $ref: '#/components/schemas/Location'
+        project_name:
+          type: string
+          description: Name of the construction project
+        description:
+          type: string
+          description: Description of the construction work
+        contractor:
+          type: string
+          description: Name of the construction contractor
+        start_date:
+          type: string
+          format: date
+        estimated_completion:
+          type: string
+          format: date
+        impact_level:
+          type: string
+          enum: [minimal, moderate, significant, severe]
+        affected_lanes:
+          type: array
+          items:
+            type: string
+        working_hours:
+          type: object
+          properties:
+            start_time:
+              type: string
+              format: time
+            end_time:
+              type: string
+              format: time
+            days:
+              type: array
+              items:
+                type: string
+                enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+
+    TrafficIncident:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the incident
+        type:
+          type: string
+          enum: [accident, breakdown, debris, weather, emergency_services, special_event]
+        severity:
+          type: string
+          enum: [minor, moderate, major, severe]
+        location:
+          $ref: '#/components/schemas/Location'
+        description:
+          type: string
+        reported_at:
+          type: string
+          format: date-time
+        estimated_clearance:
+          type: string
+          format: date-time
+        lanes_affected:
+          type: integer
+        emergency_services:
+          type: boolean
+          description: Whether emergency services are on scene
+
+    RoadSegment:
+      type: object
+      properties:
+        segment_id:
+          type: string
+        road_name:
+          type: string
+        start_location:
+          $ref: '#/components/schemas/Location'
+        end_location:
+          $ref: '#/components/schemas/Location'
+        current_speed:
+          type: number
+          description: Current average speed in km/h
+        free_flow_speed:
+          type: number
+          description: Free flow speed in km/h
+        congestion_level:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Congestion level percentage
+        travel_time:
+          type: integer
+          description: Current travel time in seconds
+        incidents:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrafficIncident'
+
+    DetailedOrganizer:
+      allOf:
+        - $ref: '#/components/schemas/Organizer'
+        - type: object
+          properties:
+            social_media:
+              type: object
+              properties:
+                facebook:
+                  type: string
+                  format: uri
+                twitter:
+                  type: string
+                  format: uri
+                instagram:
+                  type: string
+                  format: uri
+                linkedin:
+                  type: string
+                  format: uri
+            certifications:
+              type: array
+              items:
+                type: string
+              description: Relevant certifications or licenses
+            insurance_info:
+              type: object
+              properties:
+                provider:
+                  type: string
+                policy_number:
+                  type: string
+                coverage_amount:
+                  type: number
+            years_experience:
+              type: integer
+              description: Years of event organizing experience
+
+    Participant:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the participant
+        name:
+          type: string
+          description: Participant name (may be anonymized based on privacy settings)
+        registration_date:
+          type: string
+          format: date-time
+        ticket_type:
+          type: string
+          description: Type of ticket or access level
+        check_in_status:
+          type: string
+          enum: [not_checked_in, checked_in, checked_out]
+        check_in_time:
+          type: string
+          format: date-time
+        emergency_contact:
+          type: object
+          properties:
+            name:
+              type: string
+            phone:
+              type: string
+            relationship:
+              type: string
+        medical_info:
+          type: object
+          properties:
+            allergies:
+              type: array
+              items:
+                type: string
+            medications:
+              type: array
+              items:
+                type: string
+            medical_conditions:
+              type: array
+              items:
+                type: string
+        accessibility_needs:
+          type: array
+          items:
+            type: string
+
+    SOSContact:
+      type: object
+      properties:
+        participant_id:
+          type: string
+        emergency_contacts:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              phone:
+                type: string
+              relationship:
+                type: string
+              priority:
+                type: integer
+                minimum: 1
+        medical_information:
+          type: object
+          properties:
+            blood_type:
+              type: string
+            allergies:
+              type: array
+              items:
+                type: string
+            medications:
+              type: array
+              items:
+                type: string
+            medical_conditions:
+              type: array
+              items:
+                type: string
+            doctor_contact:
+              type: string
+
+    ParticipantLocation:
+      type: object
+      properties:
+        participant_id:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        accuracy:
+          type: number
+          description: Location accuracy in meters
+        timestamp:
+          type: string
+          format: date-time
+        battery_level:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Device battery level
+        is_emergency:
+          type: boolean
+          description: Whether this is an emergency location update
+        sharing_expires_at:
+          type: string
+          format: date-time
+
+    EmergencyContact:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [security, medical, fire_safety, event_manager, police, coordinator]
+        phone:
+          type: string
+        radio_channel:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        available:
+          type: boolean
+        response_time_minutes:
+          type: integer
+
+    MedicalStation:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        station_type:
+          type: string
+          enum: [first_aid, medical_tent, ambulance, hospital]
+        capacity:
+          type: integer
+        current_load:
+          type: integer
+        equipment:
+          type: array
+          items:
+            type: string
+        staff_count:
+          type: integer
+        contact_info:
+          type: object
+          properties:
+            phone:
+              type: string
+            radio:
+              type: string
+
+    EvacuationRoute:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        route_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+        capacity:
+          type: integer
+          description: Maximum people capacity for this route
+        estimated_time_minutes:
+          type: integer
+        accessibility_features:
+          type: array
+          items:
+            type: string
+        exit_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+
+    Restroom:
+      type: object
+      properties:
+        id:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        type:
+          type: string
+          enum: [mobile, permanent, portable, accessible, family, gender_neutral]
+        accessibility_features:
+          type: array
+          items:
+            type: string
+            enum: [wheelchair_accessible, baby_changing, family_room, grab_bars, wide_door]
+        capacity:
+          type: integer
+          description: Number of individual units
+        current_status:
+          type: string
+          enum: [available, occupied, maintenance, out_of_order]
+        cleanliness_rating:
+          type: number
+          minimum: 1
+          maximum: 5
+        last_cleaned:
+          type: string
+          format: date-time
+        supplies_status:
+          type: object
+          properties:
+            toilet_paper:
+              type: string
+              enum: [full, medium, low, empty]
+            soap:
+              type: string
+              enum: [full, medium, low, empty]
+            paper_towels:
+              type: string
+              enum: [full, medium, low, empty]
+        event_association:
+          type: string
+          description: Associated event ID if applicable
+
+    WeatherData:
+      type: object
+      properties:
+        current:
+          type: object
+          properties:
+            temperature:
+              type: number
+              description: Temperature in Celsius
+            feels_like:
+              type: number
+              description: Feels like temperature in Celsius
+            humidity:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Humidity percentage
+            wind_speed:
+              type: number
+              description: Wind speed in km/h
+            wind_direction:
+              type: integer
+              minimum: 0
+              maximum: 360
+              description: Wind direction in degrees
+            visibility:
+              type: number
+              description: Visibility in kilometers
+            uv_index:
+              type: number
+              minimum: 0
+              maximum: 12
+            pressure:
+              type: number
+              description: Atmospheric pressure in hPa
+            condition:
+              type: string
+              enum: [clear, partly_cloudy, cloudy, rain, heavy_rain, snow, fog, thunderstorm]
+            condition_description:
+              type: string
+        forecast:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              high_temp:
+                type: number
+              low_temp:
+                type: number
+              condition:
+                type: string
+              precipitation_chance:
+                type: number
+                minimum: 0
+                maximum: 100
+              wind_speed:
+                type: number
+        alerts:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              description:
+                type: string
+              severity:
+                type: string
+                enum: [minor, moderate, severe, extreme]
+              start_time:
+                type: string
+                format: date-time
+              end_time:
+                type: string
+                format: date-time
+        last_updated:
+          type: string
+          format: date-time
+
+    TransportStop:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        transport_types:
+          type: array
+          items:
+            type: string
+            enum: [bus, train, metro, tram, ferry]
+        accessibility_features:
+          type: array
+          items:
+            type: string
+        facilities:
+          type: array
+          items:
+            type: string
+            enum: [shelter, seating, ticket_machine, restroom, parking]
+
+    TransportRoute:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        transport_type:
+          type: string
+          enum: [bus, train, metro, tram, ferry]
+        operator:
+          type: string
+        stops:
+          type: array
+          items:
+            type: string
+            description: Stop IDs in order
+        operating_hours:
+          type: object
+          properties:
+            weekday:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: time
+                end:
+                  type: string
+                  format: time
+            weekend:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: time
+                end:
+                  type: string
+                  format: time
+        frequency_minutes:
+          type: integer
+          description: Typical frequency between services in minutes
+
+    TransportSchedule:
+      type: object
+      properties:
+        stop_id:
+          type: string
+        route_id:
+          type: string
+        departures:
+          type: array
+          items:
+            type: object
+            properties:
+              scheduled_time:
+                type: string
+                format: time
+              estimated_time:
+                type: string
+                format: time
+              delay_minutes:
+                type: integer
+              destination:
+                type: string
+              vehicle_id:
+                type: string
+              capacity_status:
+                type: string
+                enum: [low, medium, high, full]
+              accessibility:
+                type: boolean
+                description: Whether vehicle is wheelchair accessible
+
+    RoutePrediction:
+      type: object
+      properties:
+        id:
+          type: string
+        route_name:
+          type: string
+          description: Human-readable route name
+        distance_km:
+          type: number
+          description: Total distance in kilometers
+        estimated_duration_minutes:
+          type: integer
+          description: Estimated travel time in minutes
+        traffic_delay_minutes:
+          type: integer
+          description: Additional time due to traffic
+        crowd_delay_minutes:
+          type: integer
+          description: Additional time due to crowds
+        difficulty_level:
+          type: string
+          enum: [easy, moderate, difficult, very_difficult]
+        route_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+        instructions:
+          type: array
+          items:
+            type: object
+            properties:
+              step:
+                type: integer
+              instruction:
+                type: string
+              distance_meters:
+                type: number
+              duration_seconds:
+                type: integer
+              maneuver:
+                type: string
+                enum: [straight, left, right, slight_left, slight_right, sharp_left, sharp_right, u_turn]
+        warnings:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [heavy_traffic, road_closure, construction, event_crowd, weather, steep_grade]
+              description:
+                type: string
+              location:
+                $ref: '#/components/schemas/Location'
+              severity:
+                type: string
+                enum: [low, medium, high]
+        accessibility_info:
+          type: object
+          properties:
+            wheelchair_accessible:
+              type: boolean
+            elevation_gain:
+              type: number
+              description: Total elevation gain in meters
+            surface_types:
+              type: array
+              items:
+                type: string
+                enum: [paved, gravel, dirt, stairs, ramp]
+
+    OfflineMapData:
+      type: object
+      properties:
+        map_bounds:
+          type: object
+          properties:
+            northeast:
+              $ref: '#/components/schemas/Location'
+            southwest:
+              $ref: '#/components/schemas/Location'
+        tile_data:
+          type: object
+          properties:
+            format:
+              type: string
+              enum: [mvt, png, jpg]
+            zoom_levels:
+              type: array
+              items:
+                type: integer
+            tiles:
+              type: array
+              items:
+                type: object
+                properties:
+                  z:
+                    type: integer
+                  x:
+                    type: integer
+                  y:
+                    type: integer
+                  url:
+                    type: string
+                    format: uri
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        facilities:
+          type: object
+          properties:
+            restrooms:
+              type: array
+              items:
+                $ref: '#/components/schemas/Restroom'
+            parking:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  location:
+                    $ref: '#/components/schemas/Location'
+                  type:
+                    type: string
+                    enum: [street, garage, lot, accessible]
+                  capacity:
+                    type: integer
+                  hourly_rate:
+                    type: number
+            food_vendors:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  location:
+                    $ref: '#/components/schemas/Location'
+                  cuisine_type:
+                    type: string
+                  price_range:
+                    type: string
+                    enum: [budget, moderate, expensive]
+        transport:
+          type: object
+          properties:
+            stops:
+              type: array
+              items:
+                $ref: '#/components/schemas/TransportStop'
+            routes:
+              type: array
+              items:
+                $ref: '#/components/schemas/TransportRoute'
+        points_of_interest:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              location:
+                $ref: '#/components/schemas/Location'
+              category:
+                type: string
+                enum: [landmark, attraction, shopping, dining, accommodation, entertainment]
+              description:
+                type: string
+        generated_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        version:
+          type: string
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Unauthorized:
+      description: Unauthorized - invalid or missing API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Events
+    description: Event information and management
+  - name: Traffic
+    description: Traffic conditions and road information
+  - name: Event Management
+    description: Event organizer and participant management
+  - name: Organizers
+    description: Event organizer information
+  - name: Participants
+    description: Event participant management
+  - name: Location Sharing
+    description: Location sharing and tracking
+  - name: Emergency
+    description: Emergency services and SOS functionality
+  - name: Facilities
+    description: Facility locations and information
+  - name: Weather
+    description: Weather information and forecasts
+  - name: Transport
+    description: Public transport information
+  - name: Navigation
+    description: Navigation and route planning
+  - name: Routes
+    description: Route prediction and optimization
+  - name: Maps
+    description: Map services and data
+  - name: Offline
+    description: Offline functionality and data downloads
