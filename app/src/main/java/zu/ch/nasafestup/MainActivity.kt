@@ -27,9 +27,10 @@ import zu.ch.nasafestup.ui.theme.NasaFestUpTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             NasaFestUpTheme {
-                MainScreen() // 👉 qui parte la bottom nav con le 3 tab
+                MainScreen()
             }
         }
     }

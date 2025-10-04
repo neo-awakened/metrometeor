@@ -67,6 +67,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android.v173)
     implementation(libs.logging.interceptor.v500alpha11)
 
+    implementation(libs.android.maps.utils)
+
 
 
 }

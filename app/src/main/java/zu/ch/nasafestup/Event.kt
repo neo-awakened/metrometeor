@@ -28,10 +28,8 @@ data class POI(
 }
 
 enum class POIColor(@DrawableRes val iconImage: Int) {
-    RED(R.drawable.ic_toilette),
-    GREEN(R.drawable.ic_toilette),
-    YELLOW(R.drawable.ic_toilette),
-    ORANGE(R.drawable.ic_toilette)
+    RED(R.drawable.ic_toilette_red),
+    GREEN(R.drawable.ic_toilette_green),
 }
 
 val fakeEvents = listOf(
@@ -52,7 +50,6 @@ val fakeEvents = listOf(
             LatLng(47.359732, 8.536712),
             LatLng(47.359980, 8.533856)
         ),
-        // eventuale buco all'interno
         holes = listOf(
             listOf(
                 LatLng(47.361726, 8.546682),
@@ -67,18 +64,32 @@ val fakeEvents = listOf(
         imageUrl = R.drawable.img_streetparade,
         date = LocalDate.of(2024, 8, 10),
         heatmapPoints = listOf(
-            HeatPoint(LatLng(47.3653, 8.5463), 0.9),
-            HeatPoint(LatLng(47.3656, 8.5448), 0.8),
+            // RED POIs
+            HeatPoint(LatLng(47.3654, 8.5455), 1.0),
+            HeatPoint(LatLng(47.3654, 8.5455), 0.7),
+            HeatPoint(LatLng(47.3654, 8.5455), 0.5),
+            HeatPoint(LatLng(47.3625, 8.5395), 0.9),
+            HeatPoint(LatLng(47.3625, 8.5395), 0.6),
+
+            // GREEN POIs
+            HeatPoint(LatLng(47.3657, 8.5440), 0.9),
+            HeatPoint(LatLng(47.3657, 8.5440), 0.6),
+            HeatPoint(LatLng(47.3657, 8.5440), 0.4),
+
+            // extra scattered points
             HeatPoint(LatLng(47.3663, 8.5414), 0.95),
-            HeatPoint(LatLng(47.3621, 8.5391), 0.7)
+            HeatPoint(LatLng(47.3621, 8.5391), 0.7),
+            HeatPoint(LatLng(47.3640, 8.5430), 0.6),
+            HeatPoint(LatLng(47.3635, 8.5450), 0.5)
         ),
         pois = listOf(
             POI(LatLng(47.3654, 8.5455), POIColor.RED),
             POI(LatLng(47.3657, 8.5440), POIColor.GREEN),
-            POI(LatLng(47.3660, 8.5420), POIColor.YELLOW),
-            POI(LatLng(47.3625, 8.5395), POIColor.ORANGE)
+            POI(LatLng(47.3625, 8.5395), POIColor.RED),
+            POI(LatLng(47.3645, 8.5460), POIColor.GREEN)
         )
-    ), Event(
+    ),
+    Event(
         id = 2,
         title = "Züri Fäscht",
         description = "One of Europe's largest public festivals, held every three years, featuring fireworks, rides, and numerous markets.",
@@ -91,16 +102,29 @@ val fakeEvents = listOf(
         imageUrl = R.drawable.img_zurifascht,
         date = LocalDate.of(2025, 7, 5),
         heatmapPoints = listOf(
+            // RED POIs
+            HeatPoint(LatLng(47.3665, 8.5430), 1.0),
+            HeatPoint(LatLng(47.3665, 8.5430), 0.7),
+            HeatPoint(LatLng(47.3700, 8.5410), 0.9),
+            HeatPoint(LatLng(47.3700, 8.5410), 0.6),
+
+            // GREEN POIs
+            HeatPoint(LatLng(47.3670, 8.5405), 0.9),
+            HeatPoint(LatLng(47.3670, 8.5405), 0.6),
+            HeatPoint(LatLng(47.3640, 8.5375), 0.75),
+            HeatPoint(LatLng(47.3640, 8.5375), 0.5),
+
+            // extra scattered points
             HeatPoint(LatLng(47.3662, 8.5445), 0.6),
             HeatPoint(LatLng(47.3663, 8.5414), 0.85),
-            HeatPoint(LatLng(47.3630, 8.5360), 0.75),
-            HeatPoint(LatLng(47.3715, 8.5418), 0.65)
+            HeatPoint(LatLng(47.3635, 8.5390), 0.5)
         ),
         pois = listOf(
             POI(LatLng(47.3665, 8.5430), POIColor.RED),
             POI(LatLng(47.3670, 8.5405), POIColor.GREEN),
-            POI(LatLng(47.3640, 8.5375), POIColor.YELLOW),
-            POI(LatLng(47.3700, 8.5410), POIColor.ORANGE)
+            POI(LatLng(47.3640, 8.5375), POIColor.GREEN),
+            POI(LatLng(47.3700, 8.5410), POIColor.RED),
+            POI(LatLng(47.3680, 8.5390), POIColor.GREEN)
         )
     ),
     Event(
@@ -117,12 +141,15 @@ val fakeEvents = listOf(
         heatmapPoints = listOf(
             HeatPoint(LatLng(47.3752, 8.5372), 0.5),
             HeatPoint(LatLng(47.3663, 8.5414), 0.7),
-            HeatPoint(LatLng(47.3670, 8.5452), 0.95)
+            HeatPoint(LatLng(47.3670, 8.5452), 0.95),
+            HeatPoint(LatLng(47.3668, 8.5418), 0.9),
+            HeatPoint(LatLng(47.3672, 8.5440), 0.8)
         ),
         pois = listOf(
             POI(LatLng(47.3740, 8.5380), POIColor.RED),
             POI(LatLng(47.3668, 8.5418), POIColor.GREEN),
-            POI(LatLng(47.3672, 8.5440), POIColor.YELLOW)
+            POI(LatLng(47.3672, 8.5440), POIColor.RED),
+            POI(LatLng(47.3680, 8.5435), POIColor.GREEN)
         )
     ),
     Event(
@@ -139,12 +166,15 @@ val fakeEvents = listOf(
         heatmapPoints = listOf(
             HeatPoint(LatLng(47.3731, 8.5323), 0.8),
             HeatPoint(LatLng(47.3735, 8.5310), 0.6),
-            HeatPoint(LatLng(47.3725, 8.5335), 0.7)
+            HeatPoint(LatLng(47.3725, 8.5335), 0.7),
+            HeatPoint(LatLng(47.3730, 8.5325), 0.9),
+            HeatPoint(LatLng(47.3732, 8.5315), 0.7)
         ),
         pois = listOf(
             POI(LatLng(47.3730, 8.5325), POIColor.RED),
             POI(LatLng(47.3732, 8.5315), POIColor.GREEN),
-            POI(LatLng(47.3727, 8.5330), POIColor.YELLOW)
+            POI(LatLng(47.3727, 8.5330), POIColor.GREEN),
+            POI(LatLng(47.3731, 8.5328), POIColor.RED)
         )
     ),
     Event(
@@ -161,12 +191,15 @@ val fakeEvents = listOf(
         heatmapPoints = listOf(
             HeatPoint(LatLng(47.3510, 8.5126), 0.9),
             HeatPoint(LatLng(47.3505, 8.5135), 0.7),
-            HeatPoint(LatLng(47.3520, 8.5140), 0.8)
+            HeatPoint(LatLng(47.3520, 8.5140), 0.8),
+            HeatPoint(LatLng(47.3512, 8.5128), 1.0),
+            HeatPoint(LatLng(47.3507, 8.5132), 0.6)
         ),
         pois = listOf(
             POI(LatLng(47.3512, 8.5128), POIColor.RED),
             POI(LatLng(47.3507, 8.5132), POIColor.GREEN),
-            POI(LatLng(47.3518, 8.5135), POIColor.YELLOW)
+            POI(LatLng(47.3518, 8.5135), POIColor.RED),
+            POI(LatLng(47.3515, 8.5130), POIColor.GREEN)
         )
     )
 )
