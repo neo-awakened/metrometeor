@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
-    val items = listOf(BottomNavItem.Home, BottomNavItem.Events, BottomNavItem.Profile)
+    val items = listOf(BottomNavItem.Events, BottomNavItem.Profile)
 
     Scaffold(
         bottomBar = {
@@ -66,12 +66,9 @@ fun MainScreen() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = BottomNavItem.Home.route,
+            startDestination = BottomNavItem.Events.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(BottomNavItem.Home.route) { HomeScreen() }
-
-            // Nested navigation for Events tab
             navigation(
                 startDestination = "events_list",
                 route = BottomNavItem.Events.route

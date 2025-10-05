@@ -46,43 +46,26 @@ val fakeEvents = listOf(
             LatLng(47.365180, 8.535193),
             LatLng(47.365444, 8.539257)
         ),
-        holes = listOf(
-            listOf(
-                LatLng(47.361726, 8.546682),
-                LatLng(47.366785, 8.544015),
-                LatLng(47.366509, 8.542164),
-                LatLng(47.363873, 8.536986),
-                LatLng(47.353917, 8.536061),
-                LatLng(47.362594, 8.537003),
-                LatLng(47.365878, 8.540029)
-            )
-        ),
         imageUrl = R.drawable.img_streetparade,
         date = LocalDate.of(2024, 8, 10),
         heatmapPoints = listOf(
-            // RED POIs
-            HeatPoint(LatLng(47.3654, 8.5455), 1.0),
-            HeatPoint(LatLng(47.3654, 8.5455), 0.7),
-            HeatPoint(LatLng(47.3654, 8.5455), 0.5),
-            HeatPoint(LatLng(47.3625, 8.5395), 0.9),
-            HeatPoint(LatLng(47.3625, 8.5395), 0.6),
+            HeatPoint(LatLng(47.367347, 8.545308), 0.5),
+            HeatPoint(LatLng(47.367111, 8.540306), 0.8),
+            HeatPoint(LatLng(47.366682, 8.545884), 0.4),
+            HeatPoint(LatLng(47.365901, 8.539517), 0.3),
 
-            // GREEN POIs
-            HeatPoint(LatLng(47.3657, 8.5440), 0.9),
-            HeatPoint(LatLng(47.3657, 8.5440), 0.6),
-            HeatPoint(LatLng(47.3657, 8.5440), 0.4),
-
-            // extra scattered points
-            HeatPoint(LatLng(47.3663, 8.5414), 0.95),
-            HeatPoint(LatLng(47.3621, 8.5391), 0.7),
-            HeatPoint(LatLng(47.3640, 8.5430), 0.6),
-            HeatPoint(LatLng(47.3635, 8.5450), 0.5)
         ),
         pois = listOf(
-            POI(LatLng(47.3654, 8.5455), POIColor.RED),
-            POI(LatLng(47.3657, 8.5440), POIColor.GREEN),
-            POI(LatLng(47.3625, 8.5395), POIColor.RED),
-            POI(LatLng(47.3645, 8.5460), POIColor.GREEN)
+            POI(LatLng(47.3665, 8.5450), POIColor.RED),     // Near Bellevue
+            POI(LatLng(47.3669, 8.5435), POIColor.GREEN),   // Along parade route
+            POI(LatLng(47.3672, 8.5418), POIColor.RED),     // Close to Bürkliplatz
+            POI(LatLng(47.3660, 8.5406), POIColor.GREEN),   // Near lake edge
+            POI(LatLng(47.3668, 8.5378), POIColor.RED),     // Toward Enge
+            POI(LatLng(47.3661, 8.5389), POIColor.GREEN),   // Central inside area
+            POI(LatLng(47.3670, 8.5442), POIColor.RED),     // Main route
+            POI(LatLng(47.3663, 8.5463), POIColor.GREEN),   // Close to start of area
+            POI(LatLng(47.3667, 8.5428), POIColor.RED),     // Between Bellevue/Bürkliplatz
+            POI(LatLng(47.3659, 8.5398), POIColor.GREEN)    // Near water edge
         )
     ),
     Event(
