@@ -1,6 +1,7 @@
 # FestUP Android App
 
 This Android project is a **prototype app** for visualizing event areas and crowd density using **Jetpack Compose**. It stubs real event data and displays **heatmaps of crowded areas**, **points of interest**, and **routes to toilets, friends, and emergency exits**.
+The main branch is master (we had a problem in changing it to main in the first moment we kept master later)
 ---
 
 ## Features
