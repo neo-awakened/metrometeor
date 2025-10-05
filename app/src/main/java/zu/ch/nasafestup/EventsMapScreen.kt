@@ -62,7 +62,7 @@ fun EventMapScreen(
     var showFriendDialog by remember { mutableStateOf(false) } // Friend dialog
     var friendLocation by remember { mutableStateOf<LatLng?>(null) }
 
-    val myLocation = remember { LatLng(47.3667, 8.5423) } // red marker middle of bridge
+    val myLocation = remember { LatLng(47.36680752646899, 8.542964696003823) } // red marker middle of bridge
     val friendPosition = LatLng(47.3676, 8.5413) // friend marker on land
 
     // Esempio di punti dettagliati lungo la strada tra te e l'amico
@@ -111,7 +111,7 @@ fun EventMapScreen(
                     // Event polygon
                     Polygon(
                         points = event.area,
-                        fillColor = Color(0x5500FF00),
+                        fillColor = Color(0x1E08FF00),
                         strokeColor = Color(0xFF00FF00),
                         strokeWidth = 5f
                     )
@@ -121,14 +121,14 @@ fun EventMapScreen(
                         Circle(
                             center = heatPoint.latLng,
                             radius = (heatPoint.intensity * 80.0).coerceAtLeast(25.0),
-                            fillColor = Color(0x55FF0000),
+                            fillColor = Color(0x6BFF0000),
                             strokeColor = Color.Transparent,
                             zIndex = 2f
                         )
                         Circle(
                             center = heatPoint.latLng,
                             radius = (heatPoint.intensity * 150.0).coerceAtLeast(40.0),
-                            fillColor = Color(0x33FFFF00),
+                            fillColor = Color(0x63FFFF00),
                             strokeColor = Color.Transparent,
                             zIndex = 1f
                         )
