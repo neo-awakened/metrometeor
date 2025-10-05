@@ -47,6 +47,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import zu.ch.nasafestup.ui.theme.DarkBlue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,14 +60,19 @@ fun EventMapScreen(
     val context = LocalContext.current
 
     var showDialog by remember { mutableStateOf(false) } // Toilet dialog
-    var showFriendDialog by remember { mutableStateOf(false) } // Friend dialog
+    var showFriendDialog by remember { mutableStateOf(false) }
+    var showEmergencyDialog by remember { mutableStateOf(false) }
+
     var friendLocation by remember { mutableStateOf<LatLng?>(null) }
+    var emergencyLocation by remember { mutableStateOf<LatLng?>(null) }
 
     val myLocation = remember { LatLng(47.36680752646899, 8.542964696003823) } // red marker middle of bridge
-    val friendPosition = LatLng(47.3676, 8.5413) // friend marker on land
+    val friendPosition = LatLng(47.3676, 8.5413)
+    val emergencyPosition = LatLng(47.368422, 8.544056)
 
-    // Esempio di punti dettagliati lungo la strada tra te e l'amico
-    val routePointsExample = listOf(
+
+    // Route for friend (multiple points to follow street)
+    val friendRoute = listOf(
         myLocation,
         LatLng(47.36672, 8.54225),
         LatLng(47.36675, 8.5421),
@@ -84,10 +90,21 @@ fun EventMapScreen(
         friendPosition
     )
 
+    // Precise route for emergency exit (passing the bridge)
+    val emergencyRoute = listOf(
+        myLocation,                             // Start at your position on the bridge
+        LatLng(47.366956, 8.543892),
+        LatLng(47.367156, 8.544201),
+        LatLng(47.367848, 8.544104),
+        LatLng(47.368658, 8.543763),
+        LatLng(47.368663, 8.544048),
+        emergencyPosition                        // Emergency exit marker
+    )
+
 
     if (event != null) {
         val cameraState = rememberCameraPositionState {
-            position = CameraPosition.fromLatLngZoom(myLocation, 16f)
+            position = CameraPosition.fromLatLngZoom(myLocation, 15.3f)
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -111,8 +128,8 @@ fun EventMapScreen(
                     // Event polygon
                     Polygon(
                         points = event.area,
-                        fillColor = Color(0x1E08FF00),
-                        strokeColor = Color(0xFF00FF00),
+                        fillColor = Color(0x39DBC562),
+                        strokeColor = DarkBlue,
                         strokeWidth = 5f
                     )
 
@@ -149,7 +166,7 @@ fun EventMapScreen(
                         title = "You are here"
                     )
 
-                    // 👯 Friend
+                    // 👯 Friend marker + route
                     friendLocation?.let { friend ->
                         Marker(
                             state = MarkerState(position = friend),
@@ -157,10 +174,28 @@ fun EventMapScreen(
                             title = "Your Friend"
                         )
 
-                        // Draw route along points
+                        // Show route only if emergency not active
+                        if (emergencyLocation == null) {
+                            Polyline(
+                                points = friendRoute,
+                                color = Color(0xFF1976D2),
+                                width = 8f
+                            )
+                        }
+                    }
+
+                    // 🚨 Emergency exit marker + route
+                    emergencyLocation?.let { emergency ->
+                        Marker(
+                            state = MarkerState(position = emergency),
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
+                            title = "Emergency Exit"
+                        )
+
+                        // Show emergency route
                         Polyline(
-                            points = routePointsExample,
-                            color = Color(0xFF1976D2),
+                            points = emergencyRoute,
+                            color = Color(0xFFFF5722),
                             width = 8f
                         )
                     }
@@ -175,6 +210,8 @@ fun EventMapScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 FloatingActionButton(
+                    containerColor = Color.White,     // white background
+                    contentColor = DarkBlue,
                     onClick = { showDialog = true },
                     modifier = Modifier.padding(bottom = 12.dp)
                 ) {
@@ -185,11 +222,27 @@ fun EventMapScreen(
                     )
                 }
 
-                FloatingActionButton(onClick = { showFriendDialog = true }) {
+                FloatingActionButton(
+                    containerColor = Color.White,     // white background
+                    contentColor = DarkBlue,
+                    onClick = { showFriendDialog = true },
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
                     Icon(
                         modifier = Modifier.size(48.dp),
-                        painter = painterResource(id = R.drawable.ic_friend_poi),
+                        painter = painterResource(id = R.drawable.ic_friend),
                         contentDescription = "Find your friend"
+                    )
+                }
+
+                FloatingActionButton(
+                    containerColor = Color.White,     // white background
+                    contentColor = DarkBlue,
+                    onClick = { showEmergencyDialog = true }) {
+                    Icon(
+                        modifier = Modifier.size(48.dp),
+                        painter = painterResource(id = R.drawable.ic_emergency),
+                        contentDescription = "Emergency exit"
                     )
                 }
             }
@@ -200,9 +253,7 @@ fun EventMapScreen(
                     onDismissRequest = { showDialog = false },
                     title = { Text("Confirm Queue") },
                     text = { Text("Do you want to save that you are in the queue for the toilette?") },
-                    confirmButton = {
-                        Button(onClick = { showDialog = false }) { Text("Yes") }
-                    },
+                    confirmButton = { Button(onClick = { showDialog = false }) { Text("Yes") } },
                     dismissButton = { Button(onClick = { showDialog = false }) { Text("No") } }
                 )
             }
@@ -217,9 +268,27 @@ fun EventMapScreen(
                         Button(onClick = {
                             showFriendDialog = false
                             friendLocation = friendPosition
+                            emergencyLocation = null // remove emergency if present
                         }) { Text("Yes") }
                     },
                     dismissButton = { Button(onClick = { showFriendDialog = false }) { Text("No") } }
+                )
+            }
+
+            // Emergency dialog
+            if (showEmergencyDialog) {
+                AlertDialog(
+                    onDismissRequest = { showEmergencyDialog = false },
+                    title = { Text("Emergency Exit") },
+                    text = { Text("Do you want to mark the emergency exit on the map?") },
+                    confirmButton = {
+                        Button(onClick = {
+                            showEmergencyDialog = false
+                            emergencyLocation = emergencyPosition
+                            friendLocation = null // remove friend if present
+                        }) { Text("Yes") }
+                    },
+                    dismissButton = { Button(onClick = { showEmergencyDialog = false }) { Text("No") } }
                 )
             }
         }
