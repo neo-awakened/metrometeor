@@ -68,7 +68,7 @@ fun EventMapScreen(
 
     val myLocation = remember { LatLng(47.36680752646899, 8.542964696003823) } // red marker middle of bridge
     val friendPosition = LatLng(47.3676, 8.5413)
-    val emergencyPosition = LatLng(47.368422, 8.544056)
+    val emergencyPosition = LatLng(47.368163, 8.544549)
 
 
     // Route for friend (multiple points to follow street)
@@ -280,7 +280,7 @@ fun EventMapScreen(
                 AlertDialog(
                     onDismissRequest = { showEmergencyDialog = false },
                     title = { Text("Emergency Exit") },
-                    text = { Text("Do you want to mark the emergency exit on the map?") },
+                    text = { Text("Do you want to find the first responder area?") },
                     confirmButton = {
                         Button(onClick = {
                             showEmergencyDialog = false
